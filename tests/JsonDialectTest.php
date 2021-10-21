@@ -1,6 +1,8 @@
 <?php
 
-class JsonDialectTest extends PHPUnit_Framework_TestCase
+use Src\MockJsonDialectModel;
+
+class JsonDialectTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * Assert that defined JSON attributes are properly parsed and exposed through
@@ -9,11 +11,11 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
     public function testInspectJsonColumns()
     {
         // Mock the model with data
-        $mock = new MockJsonDialectModel;
+        $mock = new MockJsonDialectModel();
         $mock->setJsonColumns(['testColumn']);
         $mock->setAttribute('testColumn', json_encode(['foo' => 'bar']));
 
-        // Execute the insepect call
+        // Execute the inspect call
         $mock->inspectJsonColumns();
 
         // Assert that the column were properly parsed and various bits have
@@ -22,7 +24,7 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
         $this->assertContains('foo', $mock->getMutatedAttributes());
         $this->assertArrayNotHasKey('testColumn', $mock->toArray());
         $this->assertArrayHasKey('foo', $mock->toArray());
-        $this->assertEquals($mock->foo, 'bar');
+        $this->assertEquals('bar', $mock->foo);
     }
 
     /**
@@ -31,12 +33,12 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
     public function testDisableHiddenJsonColumns()
     {
         // Mock the model with data
-        $mock = new MockJsonDialectModel;
+        $mock = new MockJsonDialectModel();
         $mock->setJsonColumns(['testColumn']);
         $mock->setAttribute('testColumn', json_encode(['foo' => 'bar']));
         $mock->showJsonColumns(true);
 
-        // Execute the insepect call
+        // Execute the inspect call
         $mock->inspectJsonColumns();
 
         // Assert that the testColumn shows up
@@ -49,7 +51,7 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
     public function testEnableHiddenJsonAttributes()
     {
         // Mock the model with data
-        $mock = new MockJsonDialectModel;
+        $mock = new MockJsonDialectModel();
         $mock->setJsonColumns(['testColumn']);
         $mock->setAttribute('testColumn', json_encode(['foo' => 'bar']));
         $mock->showJsonAttributes(false);
@@ -64,13 +66,12 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
     /**
      * Assert that an exception is thrown when given invalid json as a
      * structure hint
-     *
-     * @expectedException Eloquent\Dialect\InvalidJsonException
      */
     public function testInvalidJsonAttribute()
     {
+        $this->expectException(Eloquent\Dialect\InvalidJsonException::class);
         // Mock the model with data
-        $mock = new MockJsonDialectModel;
+        $mock = new MockJsonDialectModel();
         $mock->hintJsonStructure( 'testColumn', json_encode(['foo'=>null]) );
 
         // Set testColumn to invalid json
@@ -83,11 +84,12 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
 
     /**
      * Assert that no exception is thrown when given null json
+     * @throws \Eloquent\Dialect\InvalidJsonException
      */
     public function testNullJsonAttribute()
     {
         // Mock the model with data
-        $mock = new MockJsonDialectModel;
+        $mock = new MockJsonDialectModel();
         $mock->hintJsonStructure( 'testColumn', json_encode(['foo'=>null]) );
 
         // Set testColumn to 'null'
@@ -105,11 +107,11 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
     public function testSetAttribute()
     {
         // Mock the model with data
-        $mock = new MockJsonDialectModel;
+        $mock = new MockJsonDialectModel();
         $mock->setJsonColumns(['testColumn']);
         $mock->setAttribute('testColumn', json_encode(['foo' => 'bar']));
 
-        // Execute the insepect call
+        // Execute the inspect call
         $mock->inspectJsonColumns();
 
         $mock->foo = 'baz';
@@ -117,17 +119,18 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
 
         // Assert that the column were properly parsed and various bits have
         // been set on the model
-        $this->assertEquals($mock->foo, 'baz');
-        $this->assertEquals($mock->fizz, 'buzz');
+        $this->assertEquals('baz', $mock->foo);
+        $this->assertEquals('buzz', $mock->fizz);
     }
 
     /**
      * Assert that JSON array attributes can be set through mutators
+     * @throws \Eloquent\Dialect\InvalidJsonException
      */
     public function testSetArrayAttribute()
     {
         // Mock the model with data
-        $mock = new MockJsonDialectModel;
+        $mock = new MockJsonDialectModel();
         $mock->hintJsonStructure( 'testColumn', json_encode(['foo'=>null]) );
 
         // Execute the hint call
@@ -138,7 +141,7 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
         // Assert that the column were properly parsed and various bits have
         // been set on the model
         $this->assertEquals('array', gettype($mock->foo));
-        $this->assertEquals(2, count($mock->foo) );
+        $this->assertCount(2, $mock->foo);
         $this->assertEquals('bar', $mock->foo[0] );
     }
 
@@ -149,18 +152,19 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
     public function testGetMutator()
     {
         // Mock the model with data
-        $mock = new MockJsonDialectModel;
+        $mock = new MockJsonDialectModel();
         $this->assertTrue($mock->hasGetMutator("testColumn->>'foo'"));
     }
 
     /**
      * Assert that defined JSON attributes are properly parsed and exposed
      * through mutators.
+     * @throws \Eloquent\Dialect\InvalidJsonException
      */
     public function testHintedJsonColumns()
     {
         // Mock the model with data
-        $mock = new MockJsonDialectModel;
+        $mock = new MockJsonDialectModel();
         $mock->hintJsonStructure( 'testColumn', json_encode(['foo'=>null]) );
 
         // Execute the hint call
@@ -179,17 +183,18 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
 
         // assert that the column has been set properly
         $this->assertEquals( 'bar', $mock->foo );
-        $this->assertEquals( $mock->testColumn, json_encode(['foo'=>'bar']) );
+        $this->assertEquals( json_encode(['foo'=>'bar']), $mock->testColumn);
     }
 
     /**
      * Assert that defined JSON attributes are returned in the getDirty()
      * response when expected.
+     * @throws \Eloquent\Dialect\InvalidJsonException
      */
     public function testGetDirtyJson()
     {
         // Mock the model with data
-        $mock = new MockJsonDialectModel;
+        $mock = new MockJsonDialectModel();
         $mock->hintJsonStructure( 'testColumn', json_encode(['foo'=>null]) );
 
         // At this point 'foo' should not be dirty
@@ -205,13 +210,12 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
     /**
      * Assert that an exception is thrown when given invalid json as a
      * structure hint
-     *
-     * @expectedException Eloquent\Dialect\InvalidJsonException
      */
     public function testInvalidHint()
     {
+        $this->expectException(Eloquent\Dialect\InvalidJsonException::class);
         // Mock the model with data
-        $mock = new MockJsonDialectModel;
+        $mock = new MockJsonDialectModel();
         $mock->hintJsonStructure( 'testColumn', '{' );
 
         // Execute the hint call
@@ -221,11 +225,12 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
     /**
      * Test the ability to allow models to provide their own custom attribute
      * getters for json attributes
+     * @throws \Eloquent\Dialect\InvalidJsonException
      */
     public function testCustomGetter()
     {
         // Mock the model with data
-        $mock = new MockJsonDialectModel;
+        $mock = new MockJsonDialectModel();
         $mock->hintJsonStructure( 'foo', json_encode(['custom_get'=>null]) );
 
         // Execute the hint call
@@ -234,17 +239,18 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
         // Assert that the column were properly parsed and various bits have
         // been set on the model
         $this->assertTrue($mock->hasGetMutator('custom_get'));
-        $this->assertEquals($mock->custom_get, 'custom getter result');
+        $this->assertEquals('custom getter result', $mock->custom_get);
     }
 
     /**
      * Test the ability to allow models to provide their own custom attribute
      * getters for json attributes
+     * @throws \Eloquent\Dialect\InvalidJsonException
      */
     public function testCustomSetter()
     {
         // Mock the model with data
-        $mock = new MockJsonDialectModel;
+        $mock = new MockJsonDialectModel();
         $mock->hintJsonStructure( 'foo', json_encode(['custom_set'=>null]) );
 
         // Execute the hint call
@@ -259,6 +265,6 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
 
         // Assert that the attribute was mutated by the mutator on our mock
         // model
-        $this->assertEquals($mock->custom_set, 'custom value');
+        $this->assertEquals('custom value', $mock->custom_set);
     }
 }

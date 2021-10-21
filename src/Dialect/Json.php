@@ -2,6 +2,9 @@
 
 namespace Eloquent\Dialect;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
+
 trait Json
 {
     /**
@@ -11,7 +14,7 @@ trait Json
      *
      * @var array
      */
-    public static $jsonOperators = [
+    public static array $jsonOperators = [
         '->',
         '->>',
         '#>',
@@ -25,7 +28,7 @@ trait Json
      *
      * @var array
      */
-    private $jsonAttributes = [];
+    private array $jsonAttributes = [];
 
     /**
      * Holds a list of column names and the structure they *may* contain (e.g.
@@ -33,37 +36,38 @@ trait Json
      *
      * @var array
      */
-    private $hintedJsonAttributes = [];
+    private array $hintedJsonAttributes = [];
 
     /**
-     * By default this trait will hide the json columns when rendering the
+     * By default, this trait will hide the json columns when rendering the
      * model using toArray() or toJson() only exposing the underlying JSON
-     * parameters as top level paremters on the model. Set this parameter to
+     * parameters as top level parameters on the model. Set this parameter to
      * true if you want to change that behavior.
      *
      * @var bool
      */
-    private $showJsonColumns = false;
+    private bool $showJsonColumns = false;
 
     /**
-     * By default this trait will append the json attributes when rendering the
+     * By default, this trait will append the json attributes when rendering the
      * model using toArray() or toJson(). Set this parameter to false if you
      * want to change that behavior.
      *
      * @var bool
      */
-    private $showJsonAttributes = true;
+    private bool $showJsonAttributes = true;
 
     /**
      * Create a new model instance that is existing.
      * Overrides parent to set Json columns.
      *
-     * @param array       $attributes
+     * @param array $attributes
      * @param string|null $connection
      *
-     * @return static
+     * @return Json|Model
+     * @throws InvalidJsonException
      */
-    public function newFromBuilder($attributes = array(), $connection = null)
+    public function newFromBuilder($attributes = [], $connection = null)
     {
         $model = parent::newFromBuilder($attributes, $connection);
         $model->inspectJsonColumns();
@@ -104,7 +108,8 @@ trait Json
     /**
      * Schema free data architecture give us tons of flexibility (yay) but
      * makes it hard to inspect a structure and build getters/setters.
-     * Therefore you can "hint" the structure to make life easier.
+     * Therefore, you can "hint" the structure to make life easier.
+     * @throws InvalidJsonException
      */
     public function addHintedAttributes()
     {
@@ -138,7 +143,7 @@ trait Json
      *
      * @throws InvalidJsonException
      */
-    public function hintJsonStructure($column, $structure)
+    public function hintJsonStructure(string $column, string $structure)
     {
         if (json_decode($structure) === null) {
             throw new InvalidJsonException();
@@ -158,7 +163,7 @@ trait Json
      * @param string $key attribute name within the JSON column
      * @param string $col name of JSON column
      */
-    public function flagJsonAttribute($key, $col)
+    public function flagJsonAttribute(string $key, string $col)
     {
         $this->jsonAttributes[$key] = $col;
     }
@@ -170,7 +175,7 @@ trait Json
      *
      * @return bool
      */
-    public function hasGetMutator($key)
+    public function hasGetMutator($key): bool
     {
         $jsonPattern = '/'.implode('|', self::$jsonOperators).'/';
 
@@ -193,7 +198,7 @@ trait Json
      *
      * @return array
      */
-    public function getMutatedAttributes()
+    public function getMutatedAttributes(): array
     {
         $attributes = parent::getMutatedAttributes();
         $jsonAttributes = array_keys($this->jsonAttributes);
@@ -246,14 +251,10 @@ trait Json
 
             // Again it's possible the key will be in the jsonAttributes array
             // (having been hinted) but not present on the actual record.
-            // Therefore test that the key is set before returning.
-            if (isset($obj->$key)) {
-                return $obj->$key;
-            } else {
-                return;
-            }
+            // Therefore, test that the key is set before returning.
+            return $obj->$key ?? null;
         } elseif ($containsJsonOperator) {
-            return;
+            return null;
         }
 
         return parent::mutateAttribute($key, $value);
@@ -308,8 +309,6 @@ trait Json
 
         $this->flagJsonAttribute($key, $attribute);
         $this->{$attribute} = json_encode($decoded);
-
-        return;
     }
 
     /**
@@ -318,7 +317,7 @@ trait Json
      *
      * @return array
      */
-    public function getDirty($includeJson = false)
+    public function getDirty($includeJson = false): array
     {
         $dirty = parent::getDirty();
 
@@ -327,12 +326,12 @@ trait Json
         }
 
         foreach (array_unique($this->jsonAttributes) as $attribute) {
-            $originals[$attribute] = json_decode(array_get($this->original, $attribute, 'null'), true);
+            $originals[$attribute] = json_decode(Arr::get($this->original, $attribute, 'null'), true);
         }
 
         foreach ($this->jsonAttributes as $jsonAttribute => $jsonColumn) {
             if ($this->$jsonAttribute !== null &&
-                $this->$jsonAttribute !== array_get($originals[$jsonColumn], $jsonAttribute)) {
+                $this->$jsonAttribute !== Arr::get($originals[$jsonColumn], $jsonAttribute)) {
                 $dirty[$jsonAttribute] = json_encode($this->$jsonAttribute);
             }
         }
@@ -343,14 +342,14 @@ trait Json
     /**
      * Allows you to specify if the actual JSON column housing the attributes
      * should be shown on toArray() and toJson() calls. Set this value in the
-     * models constructor (to make sure it is set before newFromBuilder() is
+     * models' constructor (to make sure it is set before newFromBuilder() is
      * called). This is false by default.
      *
      * @param bool $show
      *
      * @return bool
      */
-    public function showJsonColumns($show)
+    public function showJsonColumns(bool $show): bool
     {
         return $this->showJsonColumns = $show;
     }
@@ -358,14 +357,14 @@ trait Json
     /**
      * Allows you to specify if the attributes within various json columns
      * should be shown on toArray() and toJson() calls. Set this value in the
-     * models constructor (to make sure it is set before newFromBuilder() is
+     * models' constructor (to make sure it is set before newFromBuilder() is
      * called). This is true by default.
      *
-     * @param  bool show
+     * @param bool $show
      *
      * @return bool
      */
-    public function showJsonAttributes($show)
+    public function showJsonAttributes(bool $show): bool
     {
         return $this->showJsonAttributes = $show;
     }
