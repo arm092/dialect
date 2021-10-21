@@ -1,16 +1,13 @@
 # Dialect
 
-[![Build Status](https://travis-ci.org/darrylkuhn/dialect.svg?branch=master)](https://travis-ci.org/darrylkuhn/dialect) [![Code Climate](https://codeclimate.com/github/darrylkuhn/dialect/badges/gpa.svg)](https://codeclimate.com/github/darrylkuhn/dialect) [![Test Coverage](https://codeclimate.com/github/darrylkuhn/dialect/badges/coverage.svg)](https://codeclimate.com/github/darrylkuhn/dialect)
+
+[![Build Status](https://img.shields.io/appveyor/build/arm092/dialect?style=for-the-badge)](https://img.shields.io/appveyor/build/arm092/dialect) [![Code Coverage](https://img.shields.io/scrutinizer/coverage/g/arm092/dialect/master?style=for-the-badge)](https://img.shields.io/scrutinizer/coverage/g/arm092/dialect/master) [![Test Coverage](https://codeclimate.com/github/darrylkuhn/dialect/badges/coverage.svg)](https://codeclimate.com/github/darrylkuhn/dialect)
 
 Dialect provides JSON datatype support for the [Eloquent ORM](http://laravel.com/docs/eloquent). At this point this implementation is pretty bare bones and has been demonstrated to work with PostgreSQL and MySQL. There are lots of opportunities to enhance and improve. If you're interested in contributing please submit merge/pull requests.
 
 ## Installation
 
-Require this package in your `composer.json` file:
-
-`"darrylkuhn/dialect": "dev-master"`
-
-...then run `composer update` to download the package to your vendor directory.
+`composer require arm092/dialect`
 
 ## Usage
 ### The Basics
@@ -53,9 +50,9 @@ class Photo extends Eloquent
     use Eloquent\Dialect\Json;
     protected $jsonColumns = ['json_data'];
 
-    public function __construct()
+    public function boot()
     {
-        parent::__construct();
+        parent::boot();
         $this->hintJsonStructure( 'json_data', '{"foo":null}' );
     }
 }
@@ -72,9 +69,9 @@ class Photo extends Eloquent
     use Eloquent\Dialect\Json;
     protected $jsonColumns = ['json_data'];
 
-    public function __construct()
+    public function boot()
     {
-        parent::__construct();
+        parent::boot();
         $this->showJsonColumns(true);
         $this->showJsonAttributes(false);
     }

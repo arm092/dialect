@@ -1,7 +1,7 @@
 {
-    "name": "arm092/dialect",
+    "name": "arm092/new-dialect",
     "description": "Provides JSON datatype support for the Eloquent ORM",
-    "keywords": ["laravel","illuminate","eloquent","json","schemaless","schema-free"],
+    "keywords": ["laravel","illuminate","eloquent","json","schemaless","schema-free","laravel 8","php 8"],
     "license": "MIT",
     "authors": [
         {
